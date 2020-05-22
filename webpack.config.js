@@ -30,6 +30,5 @@ module.exports = {
 	},
 	plugins: [
 		new HTMLWebpackPlugin({ title: "Voltorb Flip" })
-	],
-	mode: "development"
+	]
 }
