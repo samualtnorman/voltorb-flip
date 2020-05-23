@@ -63,6 +63,15 @@ import srcMemo3 from "./assets/memo/3.png"
 import srcMemoPress from "./assets/memo/press.png"
 import srcMemoHover from "./assets/memo/hover.png"
 import srcButtonMemoHover from "./assets/button/memo/hover.png"
+import srcMusic from "./assets/music.mp3"
+import srcNumberThin1 from "./assets/number/thin_1.png"
+import srcNumberThin2 from "./assets/number/thin_2.png"
+import srcNumberThin3 from "./assets/number/thin_3.png"
+import srcNumberThin4 from "./assets/number/thin_4.png"
+import srcNumberThin5 from "./assets/number/thin_5.png"
+import srcNumberThin6 from "./assets/number/thin_6.png"
+import srcNumberThin7 from "./assets/number/thin_7.png"
+import srcNumberThin8 from "./assets/number/thin_8.png"
 
 const imageSrcs = [
 	srcMissing,
@@ -127,7 +136,15 @@ const imageSrcs = [
 	srcMemo3,
 	srcMemoPress,
 	srcMemoHover,
-	srcButtonMemoHover
+	srcButtonMemoHover,
+	srcNumberThin1,
+	srcNumberThin2,
+	srcNumberThin3,
+	srcNumberThin4,
+	srcNumberThin5,
+	srcNumberThin6,
+	srcNumberThin7,
+	srcNumberThin8
 ]
 
 interface LooseObject<T = any> {
@@ -358,6 +375,7 @@ for (let i = 0; i < 5; i++) {
 }
 
 let currentCoins = 0
+let active = false
 let lose = false
 
 const currentScoreboard: Sprite[] = []
@@ -396,17 +414,23 @@ for (let i = 0; i < 4; i++)
 		imageSrc: [ srcButtonMemo0Off, srcButtonMemo1Off, srcButtonMemo2Off, srcButtonMemo3Off ][i], visible: false
 	}))
 
+const music = new Audio(srcMusic)
+music.loop = true
+music.autoplay = true
+music.play()
+
+const levelNumber = new Sprite({ x: 174, y: 10, imageSrc: srcNumberThin1 })
+
 setup()
 updateSize()
 drawLoop()
 
 function setup() {
 	currentCoins = 0
-	lose = false
 
 	const tileValues = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
 	const toSet = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ]
-	const levelStats = levels[level][Math.floor(Math.random() * 5)]
+	const levelStats = levels[Math.round(level - 1)][Math.floor(Math.random() * 5)]
 
 	maxCoins = levelStats[3]
 
@@ -455,6 +479,8 @@ function setup() {
 
 	for (const sprite of currentScoreboard)
 		sprite.imageSrc = srcNumberBig0
+	
+	active = true
 }
 
 function drawLoop() {
@@ -492,39 +518,41 @@ function updateSize() {
 }
 
 canvas.onmousemove = ({ clientX, clientY }) => {
-	const x = (clientX - canvas.offsetLeft) / scale
-	const y = (clientY - canvas.offsetTop) / scale
+	if (active) {
+		const x = (clientX - canvas.offsetLeft) / scale
+		const y = (clientY - canvas.offsetTop) / scale
 
-	tileHover.visible = false
+		tileHover.visible = false
 
-	for (const tile of tiles) {
-		if (tile.sprite.overlapsPoint(x, y) && !tile.flipped) {
-			tileHover.imageSrc = [ srcTileHover, srcMemoHover ][Number(memoOpen)]
-			tileHover.x = tile.sprite.x - 3
-			tileHover.y = tile.sprite.y - 3
-			tileHover.visible = true
-
-			break
-		}
-	}
-
-	if (memoOpen)
-		for (const button of memoButtons) {
-			if (button.overlapsPoint(x, y)) {
-				tileHover.imageSrc = srcButtonMemoHover
-				tileHover.x = button.x - 2
-				tileHover.y = button.y - 2
+		for (const tile of tiles) {
+			if (tile.sprite.overlapsPoint(x, y) && (!tile.flipped || memoOpen)) {
+				tileHover.imageSrc = [ srcTileHover, srcMemoHover ][Number(memoOpen)]
+				tileHover.x = tile.sprite.x - 3
+				tileHover.y = tile.sprite.y - 3
 				tileHover.visible = true
 
 				break
 			}
 		}
+
+		if (memoOpen && !memoTileSelected.flipped)
+			for (const button of memoButtons) {
+				if (button.overlapsPoint(x, y)) {
+					tileHover.imageSrc = srcButtonMemoHover
+					tileHover.x = button.x - 2
+					tileHover.y = button.y - 2
+					tileHover.visible = true
+
+					break
+				}
+			}
+	}
 }
 
 canvas.onmouseup = ({ clientX, clientY }) => {
 	tileHover.visible = false
 
-	if (!lose) {
+	if (active) {
 		const x = (clientX - canvas.offsetLeft) / scale
 		const y = (clientY - canvas.offsetTop) / scale
 
@@ -588,6 +616,11 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 					tile.flipped = true
 
 					if (currentCoins == maxCoins) {
+						active = false
+
+						level < 8 &&
+							level++
+
 						const oldTotal = totalCoins
 
 						document.cookie = `totalCoins=${totalCoins += currentCoins}; max-age=31536000`
@@ -604,7 +637,10 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 						if (currentCoins)
 							animations.push(playAnimations(tileFlip(tile), transitionsScoreboard(currentScoreboard, oldCurrentCoins, currentCoins)))
 						else {
-							lose = true
+							if (level > 1)
+								level -= 0.5
+
+							active = false
 							animations.push(playAnimations(
 								tileFlip(tile),
 								blowup(tile),
@@ -618,18 +654,21 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 				}
 			}
 	}
-
-	console.log(animations.length)
 }
 
 canvas.onmousedown = ({ clientX, clientY }) => {
-	const x = (clientX - canvas.offsetLeft) / scale
-	const y = (clientY - canvas.offsetTop) / scale
+	// tileHover.visible = false
 
-	if (memoButton.overlapsPoint(x, y)) {
-		memoPress.visible = memoOpen = !memoOpen
+	if (active) {
+		music.play()
+		const x = (clientX - canvas.offsetLeft) / scale
+		const y = (clientY - canvas.offsetTop) / scale
 
-		animations.push(memoButtonPress())
+		if (memoButton.overlapsPoint(x, y)) {
+			memoPress.visible = memoOpen = !memoOpen
+
+			animations.push(memoButtonPress())
+		}
 	}
 }
 
@@ -650,56 +689,6 @@ function* tileFlip(tile: Tile) {
 	yield* skipFrames(6)
 	tile.sprite.imageSrc = [ srcTile0, srcTile1, srcTile2, srcTile3 ][tile.value]
 	tile.sprite.x -= 5
-
-	// if (!tile.value) {
-	// 	tile.sprite.priority = 2
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode0
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode1
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode2
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode3
-	// 	tile.sprite.x -= 6
-	// 	tile.sprite.y -= 6
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode4
-	// 	tile.sprite.x -= 4
-	// 	tile.sprite.y -= 4
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode5
-	// 	tile.sprite.x -= 7
-	// 	tile.sprite.y -= 7
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode6
-	// 	tile.sprite.x -= 2
-	// 	tile.sprite.y -= 2
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode7
-	// 	tile.sprite.x -= 1
-	// 	tile.sprite.y -= 1
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcExplode8
-	// 	tile.sprite.x -= 1
-	// 	tile.sprite.y -= 1
-
-	// 	yield* skipFrames(6)
-	// 	tile.sprite.imageSrc = srcTile0
-	// 	tile.sprite.x += 21
-	// 	tile.sprite.y += 21
-	// }
-
-	return
 }
 
 function* skipFrames(frames: number) {
@@ -821,7 +810,7 @@ function* blowup(tile: Tile) {
 	tile.sprite.x += 21
 	tile.sprite.y += 21
 
-	tile.sprite.priority = 2
+	tile.sprite.priority = 1
 }
 
 function* finish() {
@@ -855,8 +844,10 @@ function* finish() {
 			tile.sprite.imageSrc = srcTileBlank
 			tile.sprite.x -= 3
 
-			i == 24 &&
+			if (i == 24) {
+				levelNumber.imageSrc = [ srcNumberThin1, srcNumberThin2, srcNumberThin3, srcNumberThin4, srcNumberThin5, srcNumberThin6, srcNumberThin7, srcNumberThin8 ][Math.round(level - 1)]
 				setup()
+			}
 		}())
 	}
 }
