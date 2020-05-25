@@ -1,5 +1,7 @@
 const { resolve } = require("path")
 const HTMLWebpackPlugin = require("html-webpack-plugin")
+// const { CleanWebpackPlugin } = require("clean-webpack-plugin")
+const { ProgressPlugin } = require("webpack")
 
 module.exports = {
 	entry: "./src/index.ts",
@@ -29,6 +31,8 @@ module.exports = {
 		path: resolve(__dirname, "dist")
 	},
 	plugins: [
+		new ProgressPlugin,
+		// new CleanWebpackPlugin,
 		new HTMLWebpackPlugin({ title: "Voltorb Flip" })
 	]
 }

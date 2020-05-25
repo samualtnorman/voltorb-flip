@@ -85,20 +85,6 @@ interface LooseObject<T = any> {
 	[key: string]: T | undefined
 }
 
-const body = document.getElementsByTagName("body")[0]
-const canvas = body.appendChild(document.createElement("canvas"))
-
-canvas.width = 262
-canvas.height = 397
-
-const context = canvas.getContext("2d")
-
-let scale = 1
-
-onresize = () => {
-	updateSize()
-}
-
 class Sprite {
 	x: number
 	y: number
@@ -145,7 +131,7 @@ class Sprite {
 
 		if (image)
 			return image
-		
+
 		throw new Error("missing texture texture was missing")
 	}
 
@@ -153,10 +139,12 @@ class Sprite {
 		return Sprite.getImage(this.src)
 	}
 
-	static loadImage(src: string) {
-		let image = new Image
-		image.src = src
-		return Sprite.images[src] = image
+	static loadImage(...srcs: string[]) {
+		for (let src of srcs) {
+			let image = new Image
+			image.src = src
+			Sprite.images[src] = image
+		}
 	}
 }
 
@@ -179,93 +167,6 @@ class Tile {
 				layer: 2
 			}))
 	}
-}
-
-{
-	const imagesToLoad = [
-		srcMissing,
-		srcBackground,
-		srcTileBlank,
-		srcTileHover,
-		srcTileFlip0,
-		srcTileFlip1,
-		srcTile1Flip,
-		srcTile1,
-		srcTile2Flip,
-		srcTile2,
-		srcTile3Flip,
-		srcTile3,
-		srcTile0Flip,
-		srcTile0,
-		srcExplode0,
-		srcExplode1,
-		srcExplode2,
-		srcExplode3,
-		srcExplode4,
-		srcExplode5,
-		srcExplode6,
-		srcExplode7,
-		srcExplode8,
-		srcDigitBold0,
-		srcDigitBold1,
-		srcDigitBold2,
-		srcDigitBold3,
-		srcDigitBold4,
-		srcDigitBold5,
-		srcDigitBold6,
-		srcDigitBold7,
-		srcDigitBold8,
-		srcDigitBold9,
-		srcDigitBig0,
-		srcDigitBig1,
-		srcDigitBig2,
-		srcDigitBig3,
-		srcDigitBig4,
-		srcDigitBig5,
-		srcDigitBig6,
-		srcDigitBig7,
-		srcDigitBig8,
-		srcDigitBig9,
-		srcButtonMemoOpen,
-		srcButtonMemoClose,
-		srcButtonMemoOpenPress,
-		srcButtonMemoClosePress,
-		srcMemoFrame,
-		srcButtonMemo0On,
-		srcButtonMemo0Off,
-		srcButtonMemo1On,
-		srcButtonMemo1Off,
-		srcButtonMemo2On,
-		srcButtonMemo2Off,
-		srcButtonMemo3On,
-		srcButtonMemo3Off,
-		srcMemo0,
-		srcMemo1,
-		srcMemo2,
-		srcMemo3,
-		srcMemoPress,
-		srcMemoHover,
-		srcButtonMemoHover,
-		srcDigitThin1,
-		srcDigitThin2,
-		srcDigitThin3,
-		srcDigitThin4,
-		srcDigitThin5,
-		srcDigitThin6,
-		srcDigitThin7,
-		srcDigitThin8,
-		srcTileMemo0,
-		srcTileMemo1,
-		srcTileMemo2,
-		srcTileMemo3,
-		srcSuccess0,
-		srcSuccess1,
-		srcSuccess2,
-		srcSuccess3
-	] as const
-
-	for (const src of imagesToLoad)
-		Sprite.loadImage(src)
 }
 
 const levels = [
@@ -330,14 +231,14 @@ const levels = [
 const tileHover = new Sprite({ hidden: true, layer: 3, src: srcTileHover })
 const tiles: Tile[] = []
 const postProcessing: Generator[] = []
-
-const memoPress = new Sprite({
-	hidden: true,
-	layer: 3,
-	src: srcMemoPress,
-	x: 9,
-	y: 199
-})
+const rightInfo: Sprite[][] = []
+const bottomInfo: Sprite[][] = []
+const currentScoreboard: Sprite[] = []
+const cookie: LooseObject = {}
+const totalScoreboard: Sprite[] = []
+const memoButtons: Sprite[] = []
+const music = new Audio(srcMusic)
+const levelNumber = new Sprite({ x: 173, y: 11, src: srcDigitThin1, layer: 1 })
 
 const boldDigitSrcs = [
 	srcDigitBold0,
@@ -372,30 +273,20 @@ const tileFlipSrcs = [
 	srcTile3Flip
 ] as const
 
-const rightInfo: Sprite[][] = []
-const bottomInfo: Sprite[][] = []
-const currentScoreboard: Sprite[] = []
-const cookie: LooseObject = {}
-const totalScoreboard: Sprite[] = []
-
 const memoButton = new Sprite({
-	x: 199,
-	y: 202,
+	x: 200,
+	y: 204,
 	layer: 3,
 	src: srcButtonMemoOpen
 })
 
 const memoFrame = new Sprite({
-	x: 199,
-	y: 203,
+	x: memoButton.x,
+	y: memoButton.y + 1,
 	layer: 1,
 	src: srcMemoFrame,
 	hidden: true
 })
-
-const memoButtons: Sprite[] = []
-const music = new Audio(srcMusic)
-const levelNumber = new Sprite({ x: 174, y: 10, src: srcDigitThin1, layer: 1 })
 
 const thinDigitSrcs = [
 	"",
@@ -408,7 +299,7 @@ const thinDigitSrcs = [
 	srcDigitThin7,
 	srcDigitThin8,
 	""
-]
+] as const
 
 const memoButtonsOffSrcs = [
 	srcButtonMemo0Off,
@@ -427,36 +318,147 @@ const memoButtonSrcs = [
 	memoButtonsOffSrcs
 ] as const
 
-let level = 1
+const canvas = document.getElementsByTagName("body")[0].appendChild(document.createElement("canvas"))
+const context = canvas.getContext("2d")
 
-new Sprite({ src: srcBackground })
+Sprite.loadImage(
+	srcMissing,
+	srcBackground,
+	srcTileBlank,
+	srcTileHover,
+	srcTileFlip0,
+	srcTileFlip1,
+	srcTile1Flip,
+	srcTile1,
+	srcTile2Flip,
+	srcTile2,
+	srcTile3Flip,
+	srcTile3,
+	srcTile0Flip,
+	srcTile0,
+	srcExplode0,
+	srcExplode1,
+	srcExplode2,
+	srcExplode3,
+	srcExplode4,
+	srcExplode5,
+	srcExplode6,
+	srcExplode7,
+	srcExplode8,
+	srcDigitBold0,
+	srcDigitBold1,
+	srcDigitBold2,
+	srcDigitBold3,
+	srcDigitBold4,
+	srcDigitBold5,
+	srcDigitBold6,
+	srcDigitBold7,
+	srcDigitBold8,
+	srcDigitBold9,
+	srcDigitBig0,
+	srcDigitBig1,
+	srcDigitBig2,
+	srcDigitBig3,
+	srcDigitBig4,
+	srcDigitBig5,
+	srcDigitBig6,
+	srcDigitBig7,
+	srcDigitBig8,
+	srcDigitBig9,
+	srcButtonMemoOpen,
+	srcButtonMemoClose,
+	srcButtonMemoOpenPress,
+	srcButtonMemoClosePress,
+	srcMemoFrame,
+	srcButtonMemo0On,
+	srcButtonMemo0Off,
+	srcButtonMemo1On,
+	srcButtonMemo1Off,
+	srcButtonMemo2On,
+	srcButtonMemo2Off,
+	srcButtonMemo3On,
+	srcButtonMemo3Off,
+	srcMemo0,
+	srcMemo1,
+	srcMemo2,
+	srcMemo3,
+	srcMemoPress,
+	srcMemoHover,
+	srcButtonMemoHover,
+	srcDigitThin1,
+	srcDigitThin2,
+	srcDigitThin3,
+	srcDigitThin4,
+	srcDigitThin5,
+	srcDigitThin6,
+	srcDigitThin7,
+	srcDigitThin8,
+	srcTileMemo0,
+	srcTileMemo1,
+	srcTileMemo2,
+	srcTileMemo3,
+	srcSuccess0,
+	srcSuccess1,
+	srcSuccess2,
+	srcSuccess3
+)
+
+{
+	const backgroundImage = (new Sprite({ src: srcBackground })).getImage()
+
+	backgroundImage.onload = () => {
+		canvas.width = backgroundImage.width
+		canvas.height = backgroundImage.height
+		updateSize()
+	}
+}
+
+let scale = 1
+let level = 1
+let maxCoins = 0
+let currentCoins = 0
+let active = false
+let totalCoins = Number(cookie.totalCoins) || 0
+let memoOpen = false
+
+onresize = () => {
+	updateSize()
+}
 
 for (let i = 0; i < 25; i++)
-	tiles.push(new Tile(1, 12 + i % 5 * 32, 202 + Math.floor(i / 5) * 32))
+	tiles.push(new Tile(1, 12 + i % 5 * 32, 204 + Math.floor(i / 5) * 32))
 
-let maxCoins = 0
-let memoTileSelected = tiles[0]
-
+const memoPress = new Sprite({
+	hidden: true,
+	layer: 3,
+	src: srcMemoPress,
+	x: tiles[0].sprite.x - 3,
+	y: tiles[0].sprite.y - 3
+})
 
 for (let i = 0; i < 5; i++) {
 	rightInfo.push([
-		new Sprite({ x: 181, y: 201 + 32 * i, layer: 1, src: srcDigitBold0 }),
-		new Sprite({ x: 188, y: 201 + 32 * i, layer: 1, src: srcDigitBold0 }),
-		new Sprite({ x: 188, y: 214 + 32 * i, layer: 1, src: srcDigitBold0 })
+		new Sprite({ x: 180, y: 203 + 32 * i, layer: 1, src: srcDigitBold0 }),
+		new Sprite({ x: 188, y: 203 + 32 * i, layer: 1, src: srcDigitBold0 }),
+		new Sprite({ x: 188, y: 216 + 32 * i, layer: 1, src: srcDigitBold0 })
 	])
-}
 
-
-for (let i = 0; i < 5; i++) {
 	bottomInfo.push([
-		new Sprite({ x: 21 + 32 * i, y: 361, layer: 1, src: srcDigitBold0 }),
-		new Sprite({ x: 28 + 32 * i, y: 361, layer: 1, src: srcDigitBold0 }),
-		new Sprite({ x: 28 + 32 * i, y: 374, layer: 1, src: srcDigitBold0 })
+		new Sprite({ x: 20 + 32 * i, y: 363, layer: 1, src: srcDigitBold0 }),
+		new Sprite({ x: 28 + 32 * i, y: 363, layer: 1, src: srcDigitBold0 }),
+		new Sprite({ x: 28 + 32 * i, y: 376, layer: 1, src: srcDigitBold0 })
 	])
+
+	currentScoreboard.push(new Sprite({ x: 236 - 16 * i, y: 157, layer: 1, src: srcDigitBig0 }))
+
+	totalScoreboard.push(new Sprite({
+		x: 236 - 16 * i,
+		y: 117, layer: 1,
+		src: bigDigitSrcs[Math.floor(totalCoins / (10 ** i)) % 10]
+	}))
 }
 
-let currentCoins = 0
-let active = false
+let memoTileSelected = tiles[0]
 
 for (const keyValue of document.cookie.split("; ")) {
 	const [ key, value ] = keyValue.split("=")
@@ -464,20 +466,10 @@ for (const keyValue of document.cookie.split("; ")) {
 	cookie[key] = value
 }
 
-for (let i = 0; i < 5; i++)
-	currentScoreboard.push(new Sprite({ x: 236 - 16 * i, y: 157, layer: 1, src: srcDigitBig0 }))
-
-let totalCoins = Number(cookie.totalCoins) || 0
-
-for (let i = 0; i < 5; i++)
-	totalScoreboard.push(new Sprite({ x: 236 - 16 * i, y: 116, layer: 1, src: bigDigitSrcs[Math.floor(totalCoins / (10 ** i)) % 10] }))
-
-let memoOpen = false
-
 for (let i = 0; i < 4; i++)
 	memoButtons.push(new Sprite({
-		x: 202 + i % 2 * 24,
-		y: 273 + Math.floor(i / 2) * 24,
+		x: memoButton.x + 3 + i % 2 * 24,
+		y: memoButton.y + 71 + Math.floor(i / 2) * 24,
 		layer: 2,
 		hidden: true
 	}))
@@ -485,98 +477,6 @@ for (let i = 0; i < 4; i++)
 music.loop = true
 music.autoplay = true
 music.play()
-
-setup()
-updateSize()
-drawLoop()
-
-function setup() {
-	const tileValues = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
-	const toSet = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ]
-	const levelStats = levels[Math.round(level - 1)][Math.floor(Math.random() * 5)]
-
-	for (let i = 0; i < 4; i++)
-		memoButtons[i].src = memoButtonsOffSrcs[i]
-
-	currentCoins = 0
-	maxCoins = levelStats[3]
-
-	for (let i = 0; i < 3; i++)
-		for (let j = 0; j < levelStats[i]; j++)
-			tileValues[toSet.splice(Math.floor(Math.random() * toSet.length), 1)[0]] = (i + 2) % 4
-
-	for (let i = 0; i < 25; i++) {
-		const tile = tiles[i]
-
-		tile.value = tileValues[i]
-		tile.flipped = false
-		tile.sprite.src = srcTileBlank
-	}
-
-	for (let i = 0; i < 5; i++) {
-		let coins = 0
-		let voltorbs = 0
-
-		for (let j = 0; j < 5; j++) {
-			const value = tiles[i * 5 + j].value
-			value ? coins += value : voltorbs++
-		}
-
-		rightInfo[i][0].src = boldDigitSrcs[Math.floor(coins / 10)]
-		rightInfo[i][1].src = boldDigitSrcs[coins % 10]
-		rightInfo[i][2].src = boldDigitSrcs[voltorbs]
-	}
-
-	for (let i = 0; i < 5; i++) {
-		let coins = 0
-		let voltorbs = 0
-
-		for (let j = 0; j < 5; j++) {
-			const value = tiles[j * 5 + i].value
-			value ? coins += value : voltorbs++
-		}
-
-		bottomInfo[i][0].src = boldDigitSrcs[Math.floor(coins / 10)]
-		bottomInfo[i][1].src = boldDigitSrcs[coins % 10]
-		bottomInfo[i][2].src = boldDigitSrcs[voltorbs]
-	}
-
-	for (const sprite of currentScoreboard)
-		sprite.src = srcDigitBig0
-
-	active = true
-}
-
-function drawLoop() {
-	if (context) {
-		const postprocFinished: number[] = []
-
-		context.clearRect(0, 0, canvas.width, canvas.height)
-		Sprite.drawAll()
-
-		for (let i = 0; i < postProcessing.length; i++)
-			postProcessing[i].next().done &&
-				postprocFinished.push(i)
-
-		for (const animationDone of postprocFinished.reverse())
-			postProcessing.splice(animationDone, 1)
-	}
-
-	requestAnimationFrame(drawLoop)
-}
-
-function updateSize() {
-	scale = Math.min(window.innerHeight / canvas.height, window.innerWidth / canvas.width)
-
-	if (scale > 1) {
-		scale = Math.floor(scale)
-		canvas.className = "nearestNeigbour"
-	} else
-		canvas.className = ""
-
-	canvas.style.height = `${canvas.height * scale}px`
-	canvas.style.width = `${canvas.width * scale}px`
-}
 
 canvas.onmousemove = ({ clientX, clientY }) => {
 	const x = (clientX - canvas.offsetLeft) / scale
@@ -616,7 +516,7 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 
 	if (active) {
 		if (memoOpen) {
-			for (const tile of tiles) {
+			for (const tile of tiles)
 				if (tile.sprite.overlapsPoint(x, y)) {
 					memoTileSelected = tile
 					memoPress.x = tile.sprite.x - 3
@@ -627,7 +527,6 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 
 					break
 				}
-			}
 
 			if (!memoTileSelected.flipped) {
 				const memos = memoTileSelected.memos
@@ -637,9 +536,9 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 
 					if (memoButton.overlapsPoint(x, y)) {
 						const memo = memos[i]
-						memo.hidden = !memo.hidden
-
 						const memosOn: number[] = []
+
+						memo.hidden = !memo.hidden
 
 						for (let i = 0; i < memos.length; i++)
 							memos[i].hidden || memosOn.push(i)
@@ -741,6 +640,98 @@ canvas.onmousedown = ({ clientX, clientY }) => {
 
 canvas.onmouseleave = canvas.onmousemove
 
+setup()
+updateSize()
+drawLoop()
+
+function setup() {
+	const tileValues = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
+	const toSet = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ]
+	const levelStats = levels[Math.round(level - 1)][Math.floor(Math.random() * 5)]
+
+	for (let i = 0; i < 4; i++)
+		memoButtons[i].src = memoButtonsOffSrcs[i]
+
+	currentCoins = 0
+	maxCoins = levelStats[3]
+
+	for (let i = 0; i < 3; i++)
+		for (let j = 0; j < levelStats[i]; j++)
+			tileValues[toSet.splice(Math.floor(Math.random() * toSet.length), 1)[0]] = (i + 2) % 4
+
+	for (let i = 0; i < 25; i++) {
+		const tile = tiles[i]
+
+		tile.value = tileValues[i]
+		tile.flipped = false
+		tile.sprite.src = srcTileBlank
+	}
+
+	for (let i = 0; i < 5; i++) {
+		let coins = 0
+		let voltorbs = 0
+
+		for (let j = 0; j < 5; j++) {
+			const value = tiles[i * 5 + j].value
+			value ? coins += value : voltorbs++
+		}
+
+		rightInfo[i][0].src = boldDigitSrcs[Math.floor(coins / 10)]
+		rightInfo[i][1].src = boldDigitSrcs[coins % 10]
+		rightInfo[i][2].src = boldDigitSrcs[voltorbs]
+	}
+
+	for (let i = 0; i < 5; i++) {
+		let coins = 0
+		let voltorbs = 0
+
+		for (let j = 0; j < 5; j++) {
+			const value = tiles[j * 5 + i].value
+			value ? coins += value : voltorbs++
+		}
+
+		bottomInfo[i][0].src = boldDigitSrcs[Math.floor(coins / 10)]
+		bottomInfo[i][1].src = boldDigitSrcs[coins % 10]
+		bottomInfo[i][2].src = boldDigitSrcs[voltorbs]
+	}
+
+	for (const sprite of currentScoreboard)
+		sprite.src = srcDigitBig0
+
+	active = true
+}
+
+function drawLoop() {
+	if (context) {
+		const postprocFinished: number[] = []
+
+		context.clearRect(0, 0, canvas.width, canvas.height)
+		Sprite.drawAll()
+
+		for (let i = 0; i < postProcessing.length; i++)
+			postProcessing[i].next().done &&
+				postprocFinished.push(i)
+
+		for (const animationDone of postprocFinished.reverse())
+			postProcessing.splice(animationDone, 1)
+	}
+
+	requestAnimationFrame(drawLoop)
+}
+
+function updateSize() {
+	scale = Math.min(window.innerHeight / canvas.height, window.innerWidth / canvas.width)
+
+	if (scale > 1) {
+		scale = Math.floor(scale)
+		canvas.className = "nearestNeigbour"
+	} else
+		canvas.className = ""
+
+	canvas.style.height = `${canvas.height * scale}px`
+	canvas.style.width = `${canvas.width * scale}px`
+}
+
 function* tileFlip(tile: Tile) {
 	tile.sprite.src = srcTileFlip0
 	tile.sprite.x += 3
@@ -795,6 +786,7 @@ function* playAnimations(...animations: Generator[]) {
 
 function* memoButtonPress() {
 	memoButton.src = [ srcButtonMemoOpenPress, srcButtonMemoClosePress ][Number(memoOpen)]
+
 	yield* skipFrames(6)
 
 	memoButton.src = [ srcButtonMemoOpen, srcButtonMemoClose ][Number(memoOpen)]
@@ -831,7 +823,7 @@ function* memoButtonPress() {
 }
 
 function* blowup(tile: Tile) {
-	tile.sprite.layer = 3
+	tile.sprite.layer = 5
 
 	yield* skipFrames(6)
 	tile.sprite.src = srcExplode0
