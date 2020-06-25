@@ -1,5 +1,3 @@
-onload = ({ timeStamp }) => console.log(timeStamp)
-
 import "./style.css"
 
 import srcButtonMemo0Off       from "./assets/button/memo/0_off.png"
@@ -77,7 +75,8 @@ import srcTileMemo2            from "./assets/tile/memo_2.png"
 import srcTileMemo3            from "./assets/tile/memo_3.png"
 import srcTile0                from "./assets/tile/voltorb.png"
 import srcTile0Flip            from "./assets/tile/voltorb_flip.png"
-import srcMusic                from "./assets/music.mp3"
+import srcMusicIntro           from "./assets/music_intro.mp3"
+import srcMusicLoop            from "./assets/music_loop.mp3"
 import srcBackground           from "./assets/background.png"
 import srcMissing              from "./assets/missing.png"
 import srcSuccess0             from "./assets/success_0.png"
@@ -240,7 +239,8 @@ const bottomInfo: Sprite[][] = []
 const currentScoreboard: Sprite[] = []
 const totalScoreboard: Sprite[] = []
 const memoButtons: Sprite[] = []
-const music = new Audio(srcMusic)
+let music = new Audio(srcMusicIntro)
+const musicLoop = new Audio(srcMusicLoop)
 const levelNumber = new Sprite({ x: 173, y: 11, src: srcDigitThin1, layer: 1 })
 
 const boldDigitSrcs = [
@@ -435,6 +435,7 @@ let flip8Streak = 0
 volumeSlider.max = "1"
 volumeSlider.step = "0.001"
 volumeSlider.type = "range"
+volumeSlider.value = "0.5"
 
 volumeSlider.oninput = () => {
 	music.volume = volumeSlider.valueAsNumber
@@ -443,7 +444,7 @@ volumeSlider.oninput = () => {
 text.innerText = "Volume:"
 text.style.color = "white"
 
-music.volume = volumeSlider.valueAsNumber || 0.5
+music.volume = volumeSlider.valueAsNumber
 
 // volumeSlider.width = 200
 
@@ -498,8 +499,15 @@ for (let i = 0; i < 4; i++)
 		hidden: true
 	}))
 
-music.loop = true
+// musicIntro.loop = true
 music.autoplay = true
+
+music.onended = () => {
+	music = musicLoop
+	music.loop = true
+	music.volume = volumeSlider.valueAsNumber
+	music.play()
+}
 
 canvas.onmousemove = (event) => {
 	const { clientX, clientY, ctrlKey, buttons } = event
