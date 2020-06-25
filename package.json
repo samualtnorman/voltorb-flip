@@ -1,12 +1,13 @@
 {
 	"name": "voltorb-flip",
-	"version": "0.0.0",
-	"description": "",
+	"version": "0.1.0",
+	"description": "Faithful recreation of HGSS's VOLTORB Flip game.",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "rm -frd dist && webpack --mode=production",
-		"watch": "webpack --mode=development --watch --devtool=inline-source-map"
+		"watch": "webpack --mode=development --watch --devtool=inline-source-map",
+		"win-build": "rd test /S /Q && && webpack --mode=production"
 	},
 	"author": "Samual Norman",
 	"license": "MIT",
