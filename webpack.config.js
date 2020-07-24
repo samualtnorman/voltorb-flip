@@ -24,5 +24,8 @@ module.exports = {
 		new ProgressPlugin,
 		// new CleanWebpackPlugin,
 		new HTMLWebpackPlugin({ title: "Voltorb Flip" })
-	]
+	],
+	resolve: {
+		extensions: [".ts", ".tsx", ".js"]
+	},
 }
