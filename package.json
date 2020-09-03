@@ -7,7 +7,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "rm -frd dist && webpack --mode=production",
 		"watch": "webpack --mode=development --watch --devtool=inline-source-map",
-		"win-build": "rd test /S /Q && && webpack --mode=production"
+		"win-build": "rd test /S /Q && webpack --mode=production"
 	},
 	"author": "Samual Norman",
 	"license": "MIT",
