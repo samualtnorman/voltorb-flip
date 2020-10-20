@@ -1,0 +1,34 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Dependabot Auto Merge
+        # You may pin to the exact commit or the version.
+        # uses: ahmadnassri/action-dependabot-auto-merge@92c24d07744370b6c8ead6d4065c6cd450b8f3b1
+        uses: ahmadnassri/action-dependabot-auto-merge@v2.1.3
+        with:
+          # The GitHub token used to merge the pull-request
+          github-token: 
+          # The command to pass to Dependabot as a comment
+          command: # optional, default is merge
+          # Auto-approve pull-requests
+          approve: # optional, default is true
+          # The version comparison target (major, minor, patch). This is ignored if .github/auto-merge.yml exists
+          target: # optional, default is patch
