@@ -1,4 +1,4 @@
-![Build Test](../../workflows/CI/badge.svg)
+![Build Test](../../workflows/Build%20Test/badge.svg)
 
 # Voltorb Flip
 
