@@ -1,9 +1,8 @@
 ![Build Test](../../workflows/Build%20Test/badge.svg)
 
+See [the demo](https://samual.uk/voltorb-flip/) on [my website](https://samual.uk/).
+
 # Voltorb Flip
-
-It's also hosted on [my website](https://samual.uk/voltorb-flip/).
-
 This is an open source faithful recreation of VOLTORB Flip from Pokémon HeartGold and SoulSilver written in typescript (a superset of javascript). None of the code is commented (sorry) but I'm open to pull requests if you have a bug fix or feature. Thanks.
 
 ![screenshot](docs/screenshot.png)
