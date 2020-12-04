@@ -1,4 +1,4 @@
-![CI](https://github.com/samualtnorman/voltorb-flip/workflows/CI/badge.svg)
+![Build Test](../../workflows/CI/badge.svg)
 
 # Voltorb Flip
 
