@@ -1,6 +1,5 @@
 {
 	"name": "voltorb-flip",
-	"version": "0.1.0",
 	"description": "Faithful recreation of HGSS's VOLTORB Flip game.",
 	"main": "src/index.ts",
 	"scripts": {
@@ -10,7 +9,7 @@
 		"win-build": "rd test /S /Q && webpack --mode=production"
 	},
 	"author": "Samual Norman",
-	"license": "MIT",
+	"license": "GPL-3.0-or-later",
 	"devDependencies": {
 		"css-loader": "^5.0.1",
 		"file-loader": "^6.2.0",
