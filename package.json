@@ -3,10 +3,8 @@
 	"description": "Faithful recreation of HGSS's VOLTORB Flip game.",
 	"main": "src/index.ts",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "rm -frd dist && webpack --mode=production",
-		"watch": "webpack --mode=development --watch --devtool=inline-source-map",
-		"win-build": "rd test /S /Q && webpack --mode=production"
+		"watch": "webpack --mode=development --watch --devtool=inline-source-map"
 	},
 	"author": "Samual Norman",
 	"license": "GPL-3.0-or-later",
