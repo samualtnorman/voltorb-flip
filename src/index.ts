@@ -75,14 +75,14 @@ import srcTileMemo2            from "./assets/tile/memo_2.png"
 import srcTileMemo3            from "./assets/tile/memo_3.png"
 import srcTile0                from "./assets/tile/voltorb.png"
 import srcTile0Flip            from "./assets/tile/voltorb_flip.png"
-import srcMusicIntro           from "./assets/music_intro.mp3"
-import srcMusicLoop            from "./assets/music_loop.mp3"
 import srcBackground           from "./assets/background.png"
 import srcMissing              from "./assets/missing.png"
 import srcSuccess0             from "./assets/success_0.png"
 import srcSuccess1             from "./assets/success_1.png"
 import srcSuccess2             from "./assets/success_2.png"
 import srcSuccess3             from "./assets/success_3.png"
+import srcMusicIntro           from "./assets/music_intro.mp3"
+import srcMusicLoop            from "./assets/music_loop.mp3"
 
 interface LooseObject<T = any> {
 	[key: string]: T | undefined
@@ -810,7 +810,7 @@ function updateSize() {
 	if (scale > 1) {
 		if (window.innerHeight < window.innerWidth)
 			scale = Math.floor(scale)
-		
+
 		canvas.className = "nearestNeigbour"
 	} else
 		canvas.className = ""
