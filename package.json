@@ -1,6 +1,6 @@
 {
 	"name": "voltorb-flip",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"description": "Faithful recreation of HGSS's VOLTORB Flip game.",
 	"main": "src/index.ts",
 	"scripts": {
