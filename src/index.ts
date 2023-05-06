@@ -1,5 +1,3 @@
-import "./style.css"
-
 import srcButtonMemo0Off       from "./assets/button/memo/0_off.png"
 import srcButtonMemo0On        from "./assets/button/memo/0_on.png"
 import srcButtonMemo1Off       from "./assets/button/memo/1_off.png"
@@ -84,9 +82,9 @@ import srcSuccess3             from "./assets/success_3.png"
 import srcMusicIntro           from "./assets/music_intro.mp3"
 import srcMusicLoop            from "./assets/music_loop.mp3"
 
-interface LooseObject<T = any> {
-	[key: string]: T | undefined
-}
+const missingTextureImage = new Image
+
+missingTextureImage.src = srcMissing
 
 class Sprite {
 	x: number
@@ -127,18 +125,13 @@ class Sprite {
 			sprite.draw()
 	}
 
-	static images: LooseObject<HTMLImageElement> = {}
+	static images = new Map<string, HTMLImageElement | undefined>
 
-	static getImage(src: string) {
-		const image = Sprite.images[src] || Sprite.images[srcMissing]
-
-		if (image)
-			return image
-
-		throw new Error("missing texture texture was missing")
+	static getImage(src: string): HTMLImageElement {
+		return Sprite.images.get(src) || missingTextureImage
 	}
 
-	getImage() {
+	getImage(): HTMLImageElement {
 		return Sprite.getImage(this.src)
 	}
 
@@ -146,7 +139,7 @@ class Sprite {
 		for (let src of srcs) {
 			let image = new Image
 			image.src = src
-			Sprite.images[src] = image
+			Sprite.images.set(src, image)
 		}
 	}
 }
@@ -321,10 +314,6 @@ const memoButtonSrcs = [
 	]
 ] as const
 
-const body = document.getElementsByTagName("body")[0]
-const canvas = body.appendChild(document.createElement("canvas"))
-const text = body.appendChild(document.createElement("p"))
-const volumeSlider = body.appendChild(document.createElement("input"))
 const context = canvas.getContext("2d")
 
 Sprite.loadImage(
@@ -432,29 +421,10 @@ let copyMemoMode = false
 let flips = 0
 let flip8Streak = 0
 
-volumeSlider.max = "1"
-volumeSlider.step = "0.001"
-volumeSlider.type = "range"
-volumeSlider.value = "0.5"
-
-volumeSlider.oninput = () => {
-	music.volume = volumeSlider.valueAsNumber
-}
-
-text.innerText = "Volume:"
-text.style.color = "white"
-
+volumeSlider.oninput = () => music.volume = volumeSlider.valueAsNumber
 music.volume = volumeSlider.valueAsNumber
-
-// volumeSlider.width = 200
-
-onmousedown = () => {
-	music.play()
-}
-
-onresize = () => {
-	updateSize()
-}
+onmousedown = () => music.play()
+onresize = updateSize
 
 for (let i = 0; i < 25; i++)
 	tiles.push(new Tile(1, 12 + i % 5 * 32, 204 + Math.floor(i / 5) * 32))
@@ -491,15 +461,15 @@ for (let i = 0; i < 5; i++) {
 
 let memoTileSelected = tiles[0]
 
-for (let i = 0; i < 4; i++)
+for (let i = 0; i < 4; i++) {
 	memoButtons.push(new Sprite({
 		x: memoButton.x + 3 + i % 2 * 24,
 		y: memoButton.y + 71 + Math.floor(i / 2) * 24,
 		layer: 2,
 		hidden: true
 	}))
+}
 
-// musicIntro.loop = true
 music.autoplay = true
 
 music.onended = () => {
@@ -694,22 +664,15 @@ canvas.onmouseup = ({ clientX, clientY }) => {
 	}
 }
 
-onblur = () => {
-	music.pause()
-}
+onblur = () => music.pause()
+onfocus = () => music.play()
 
-onfocus = () => {
-	music.play()
-}
-
-canvas.onmousedown = (event) => {
-	const { clientX, clientY, ctrlKey, buttons } = event
-
-	if (ctrlKey && buttons == 1 && canvas.onmouseup)
+canvas.onmousedown = event => {
+	if (event.ctrlKey && event.buttons == 1 && canvas.onmouseup)
 		canvas.onmouseup(event)
 	else {
-		const x = (clientX - canvas.offsetLeft) / scale
-		const y = (clientY - canvas.offsetTop) / scale
+		const x = (event.clientX - canvas.offsetLeft) / scale
+		const y = (event.clientY - canvas.offsetTop) / scale
 
 		if (active && memoButton.overlapsPoint(x, y)) {
 			memoPress.hidden = !(memoOpen = !memoOpen)
@@ -723,9 +686,7 @@ canvas.onmouseleave = canvas.onmousemove
 {
 	main()
 
-	function main(time?: number) {
-		requestAnimationFrame(main)
-
+	function main() {
 		if (context) {
 			const postprocFinished: number[] = []
 
@@ -739,6 +700,8 @@ canvas.onmouseleave = canvas.onmousemove
 			for (const animationDone of postprocFinished.reverse())
 				postProcessing.splice(animationDone, 1)
 		}
+
+		requestAnimationFrame(main)
 	}
 }
 
@@ -759,9 +722,10 @@ function setup() {
 	for (let i = 0; i < 4; i++)
 		memoButtons[i].src = memoButtonSrcs[0][i]
 
-	for (let i = 0; i < 3; i++)
+	for (let i = 0; i < 3; i++) {
 		for (let j = 0; j < levelStats[i]; j++)
 			tileValues[toSet.splice(Math.floor(Math.random() * toSet.length), 1)[0]] = (i + 2) % 4
+	}
 
 	for (let i = 0; i < 25; i++) {
 		const tile = tiles[i]
@@ -788,14 +752,17 @@ function setup() {
 		voltorbs = 0
 
 		for (let j = 0; j < 5; j++) {
-			const value = tiles[j * 5 + i].value
-			value ? coins += value : voltorbs++
+			const value = tiles[(j * 5) + i].value
+
+			if (value)
+				coins += value
+			else
+				voltorbs++
 		}
 
 		bottomInfo[i][0].src = boldDigitSrcs[Math.floor(coins / 10)]
 		bottomInfo[i][1].src = boldDigitSrcs[coins % 10]
 		bottomInfo[i][2].src = boldDigitSrcs[voltorbs]
-
 	}
 
 	for (const sprite of currentScoreboard)
@@ -811,9 +778,10 @@ function updateSize() {
 		if (window.innerHeight < window.innerWidth)
 			scale = Math.floor(scale)
 
-		canvas.className = "nearestNeigbour"
+		canvas.style.imageRendering = "crisp-edges"
+		canvas.style.imageRendering = "pixelated"
 	} else
-		canvas.className = ""
+		canvas.style.imageRendering = ""
 
 	canvas.style.height = `${canvas.height * scale}px`
 	canvas.style.width = `${canvas.width * scale}px`
@@ -825,48 +793,38 @@ function updateSize() {
 function* tileFlip(tile: Tile) {
 	tile.sprite.src = srcTileFlip0
 	tile.sprite.x += 3
-
 	yield* skipFrames(6)
 	tile.sprite.src = srcTileFlip1
 	tile.sprite.x +=  6
-
 	yield* skipFrames(6)
 	tile.sprite.src = tileFlipSrcs[tile.value]
 	tile.sprite.x -=  4
-
 	yield* skipFrames(6)
 	tile.sprite.src = [ srcTile0, srcTile1, srcTile2, srcTile3 ][tile.value]
 	tile.sprite.x -= 5
 }
 
 function* skipFrames(frames: number) {
-	for (let i = 0; i < frames - 1; i++)
+	while (--frames)
 		yield
 }
 
 function* transitionsScoreboard(scoreboard: Sprite[], from: number, to: number) {
 	while (from != to) {
-		from > to ? from-- : from++
+		if (from > to)
+			from--
+		else
+			from++
 
-		for (let i = 0; i < 5; i++)
-			scoreboard[i].src = bigDigitSrcs[Math.floor(from / (10 ** i)) % 10]
+		scoreboard[0].src = bigDigitSrcs[Math.floor(from / (10 ** 0)) % 10]
+		scoreboard[1].src = bigDigitSrcs[Math.floor(from / (10 ** 1)) % 10]
+		scoreboard[2].src = bigDigitSrcs[Math.floor(from / (10 ** 2)) % 10]
+		scoreboard[3].src = bigDigitSrcs[Math.floor(from / (10 ** 3)) % 10]
+		scoreboard[4].src = bigDigitSrcs[Math.floor(from / (10 ** 4)) % 10]
 
 		yield
 	}
 }
-
-// function* darkenScreen() {
-// 	if (context) {
-// 		let i = 0
-
-// 		while (1) {
-// 			context.fillStyle = "#000000" + (i < 129 ? i += 2 : i).toString(16)
-// 			context.beginPath()
-// 			context.fillRect(0, 190, canvas.width, 207)
-// 			yield
-// 		}
-// 	}
-// }
 
 function* playAnimationsSync(...animations: Generator[]) {
 	for (const animation of animations)
@@ -875,113 +833,77 @@ function* playAnimationsSync(...animations: Generator[]) {
 
 function* memoButtonPress() {
 	memoButton.src = [ srcButtonMemoOpenPress, srcButtonMemoClosePress ][Number(memoOpen)]
-
 	yield* skipFrames(6)
-
 	memoButton.src = [ srcButtonMemoOpen, srcButtonMemoClose ][Number(memoOpen)]
 
 	if (memoOpen) {
 		memoFrame.hidden = false
-
 		yield* skipFrames(2)
-
 		memoFrame.y += 17
-
 		yield* skipFrames(2)
-
 		memoFrame.y += 17
-
 		yield* skipFrames(2)
-
 		memoFrame.y += 17
-
 		yield* skipFrames(2)
-
 		memoFrame.y += 16
-
-		for (let i = 0; i < 4; i++)
-			memoButtons[i].hidden = false
-
 		sMemoButton.hidden = false
+
+		memoButtons[0].hidden = false
+		memoButtons[1].hidden = false
+		memoButtons[2].hidden = false
+		memoButtons[3].hidden = false
 	} else {
-		for (let i = 0; i < 4; i++)
-			memoButtons[i].hidden = true
+		memoButtons[0].hidden = true
+		memoButtons[1].hidden = true
+		memoButtons[2].hidden = true
+		memoButtons[3].hidden = true
 
 		sMemoButton.hidden = true
-
 		memoFrame.y -= 16
-
 		yield* skipFrames(2)
-
 		memoFrame.y -= 17
-
 		yield* skipFrames(2)
-
 		memoFrame.y -= 17
-
 		yield* skipFrames(2)
-
 		memoFrame.y -= 17
-
 		yield* skipFrames(2)
-
 		memoFrame.hidden = true
 	}
 }
 
 function* blowup(tile: Tile) {
 	tile.sprite.layer = 5
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode0
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode1
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode2
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode3
 	tile.sprite.x -= 6
 	tile.sprite.y -= 6
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode4
 	tile.sprite.x -= 4
 	tile.sprite.y -= 4
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode5
 	tile.sprite.x -= 7
 	tile.sprite.y -= 7
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode6
 	tile.sprite.x -= 2
 	tile.sprite.y -= 2
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode7
 	tile.sprite.x -= 1
 	tile.sprite.y -= 1
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcExplode8
 	tile.sprite.x -= 1
 	tile.sprite.y -= 1
-
 	yield* skipFrames(6)
-
 	tile.sprite.src = srcTile0
 	tile.sprite.x += 21
 	tile.sprite.y += 21
@@ -1002,22 +924,15 @@ function* finish() {
 
 		postProcessing.push(function* () {
 			yield* skipFrames(60 + i % 5 * 12)
-
 			tile.sprite.src = tileFlipSrcs[tile.value]
 			tile.sprite.x += 5
-
 			yield* skipFrames(6)
-
 			tile.sprite.src = srcTileFlip1
 			tile.sprite.x +=  4
-
 			yield* skipFrames(6)
-
 			tile.sprite.src = srcTileFlip0
 			tile.sprite.x -= 6
-
 			yield* skipFrames(6)
-
 			tile.sprite.src = srcTileBlank
 			tile.sprite.x -= 3
 
@@ -1031,18 +946,50 @@ function* finish() {
 
 function* success({ sprite: { x, y } }: Tile) {
 	if (context) {
-		let images = [
-			Sprite.getImage(srcSuccess0),
-			Sprite.getImage(srcSuccess1),
-			Sprite.getImage(srcSuccess2),
-			Sprite.getImage(srcSuccess3)
-		]
+		const success0 = Sprite.getImage(srcSuccess0)
+		const success1 = Sprite.getImage(srcSuccess1)
+		const success2 = Sprite.getImage(srcSuccess2)
+		const success3 = Sprite.getImage(srcSuccess3)
 
-		for (let i = 0; i < 4; i++)
-			for (let j = 0; j < 6; j++) {
-				context.drawImage(images[i], x - 13, y - 13)
-				yield
-			}
+		context.drawImage(success0, x - 13, y - 13)
+		yield
+		context.drawImage(success0, x - 13, y - 13)
+		yield
+		context.drawImage(success0, x - 13, y - 13)
+		yield
+		context.drawImage(success0, x - 13, y - 13)
+		yield
+		context.drawImage(success0, x - 13, y - 13)
+		yield
+		context.drawImage(success1, x - 13, y - 13)
+		yield
+		context.drawImage(success1, x - 13, y - 13)
+		yield
+		context.drawImage(success1, x - 13, y - 13)
+		yield
+		context.drawImage(success1, x - 13, y - 13)
+		yield
+		context.drawImage(success1, x - 13, y - 13)
+		yield
+		context.drawImage(success2, x - 13, y - 13)
+		yield
+		context.drawImage(success2, x - 13, y - 13)
+		yield
+		context.drawImage(success2, x - 13, y - 13)
+		yield
+		context.drawImage(success2, x - 13, y - 13)
+		yield
+		context.drawImage(success2, x - 13, y - 13)
+		yield
+		context.drawImage(success3, x - 13, y - 13)
+		yield
+		context.drawImage(success3, x - 13, y - 13)
+		yield
+		context.drawImage(success3, x - 13, y - 13)
+		yield
+		context.drawImage(success3, x - 13, y - 13)
+		yield
+		context.drawImage(success3, x - 13, y - 13)
 	}
 }
 

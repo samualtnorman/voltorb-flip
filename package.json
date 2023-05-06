@@ -1,22 +1,17 @@
 {
-	"name": "voltorb-flip",
-	"version": "1.0.0",
+	"private": true,
 	"description": "Faithful recreation of HGSS's VOLTORB Flip game.",
-	"main": "src/index.ts",
+	"type": "module",
 	"scripts": {
-		"build": "rm -frd dist && webpack --mode=production",
-		"watch": "webpack --mode=development --watch --devtool=inline-source-map"
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"lint": "tsc"
 	},
 	"author": "Samual Norman",
 	"license": "GPL-3.0-or-later",
 	"devDependencies": {
-		"css-loader": "6.x",
-		"file-loader": "6.x",
-		"html-webpack-plugin": "5.x",
-		"style-loader": "3.x",
-		"ts-loader": "9.x",
-		"typescript": "4.x",
-		"webpack": "5.x",
-		"webpack-cli": "4.x"
+		"typescript": "^5.0.4",
+		"vite": "^4.3.3"
 	}
 }
