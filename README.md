@@ -39,13 +39,7 @@ This project requires and uses Node and NPM (which comes with Node). If you're o
 
 Compiling will produce a website in the dist folder of the project. To "run" the game, open the `index.html` file found in the dist folder in your preferred browser.
 
-## Linux
 To build the project on a linux machine, open a command line in the project folder, and run `npm run build`.
-
-## Windows
-Building on a Windows machine is only slightly different, open a command line in the project folder, and run `npm run win-build`.
-
-The reason for the difference is that the folder is deleted and recreated upon compilation to clean up left over files unneccisary files from a previous compilation.
 
 ## Debugging
 If you are writing a feature or fixing a bug and are incrementally testing changes and don't want to have to recompile the whole project every five seconds you can instead a primitive debug mode.
