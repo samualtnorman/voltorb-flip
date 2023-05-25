@@ -11,7 +11,9 @@
 	"author": "Samual Norman",
 	"license": "GPL-3.0-or-later",
 	"devDependencies": {
+		"@types/html-minifier-terser": "^7.0.0",
 		"typescript": "^5.0.4",
-		"vite": "^4.3.3"
+		"vite": "^4.3.8",
+		"vite-plugin-html-minifier-terser": "^3.0.0"
 	}
 }
