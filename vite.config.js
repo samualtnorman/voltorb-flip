@@ -1,6 +1,4 @@
-import htmlMinifierTerser_ from "vite-plugin-html-minifier-terser"
-
-const htmlMinifierTerser = htmlMinifierTerser_.default
+import htmlMinifierTerser from "vite-plugin-html-minifier-terser"
 
 /** @type {import("vite").UserConfig} */
 export default {
