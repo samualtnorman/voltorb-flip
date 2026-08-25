@@ -17,6 +17,6 @@
 		"vite-plugin-html-minifier-terser": "^3.8.0"
 	},
 	"engines": {
-		"pnpm": "^9"
+		"pnpm": "^11"
 	}
 }
